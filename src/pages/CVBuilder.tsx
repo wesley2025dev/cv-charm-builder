@@ -3,10 +3,13 @@ import { PersonalInfoForm } from "@/components/forms/PersonalInfoForm";
 import { ExperienceForm } from "@/components/forms/ExperienceForm";
 import { EducationForm } from "@/components/forms/EducationForm";
 import { SkillsForm } from "@/components/forms/SkillsForm";
-import { CVPreview } from "@/components/CVPreview";
+import { TemplateRenderer } from "@/components/TemplateRenderer";
+import { TemplateSelector } from "@/components/TemplateSelector";
 import { useCVBuilder } from "@/hooks/useCVBuilder";
+import { usePDFExport } from "@/hooks/usePDFExport";
+import { useSpellCheck } from "@/hooks/useSpellCheck";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Download, User, Briefcase, GraduationCap, Wrench, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Download, User, Briefcase, GraduationCap, Wrench, FileText, Palette, Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
@@ -14,12 +17,15 @@ const steps = [
   { id: 1, label: "Experience", icon: Briefcase },
   { id: 2, label: "Education", icon: GraduationCap },
   { id: 3, label: "Skills", icon: Wrench },
+  { id: 4, label: "Template", icon: Palette },
 ];
 
 export default function CVBuilder() {
   const {
     cvData,
     currentStep,
+    selectedTemplate,
+    setSelectedTemplate,
     updatePersonalInfo,
     addExperience,
     updateExperience,
@@ -29,10 +35,25 @@ export default function CVBuilder() {
     removeEducation,
     addSkill,
     removeSkill,
+    setCVDataDirectly,
     nextStep,
     prevStep,
     goToStep,
   } = useCVBuilder();
+
+  const { exportToPDF, isExporting } = usePDFExport();
+  const { correctCVData, isChecking } = useSpellCheck();
+
+  const handleDownload = () => {
+    exportToPDF("cv-preview", `my-cv-${selectedTemplate}`);
+  };
+
+  const handleAIPolish = async () => {
+    const correctedData = await correctCVData(cvData);
+    setCVDataDirectly(correctedData);
+  };
+
+  const hasContent = cvData.personalInfo.fullName || cvData.experience.length > 0 || cvData.education.length > 0 || cvData.skills.length > 0;
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -69,6 +90,14 @@ export default function CVBuilder() {
             onRemove={removeSkill}
           />
         );
+      case 4:
+        return (
+          <div>
+            <h2 className="font-display text-xl font-semibold mb-2">Choose Your Template</h2>
+            <p className="text-muted-foreground mb-6">Select a professional design that represents you best</p>
+            <TemplateSelector selectedTemplate={selectedTemplate} onSelect={setSelectedTemplate} />
+          </div>
+        );
       default:
         return null;
     }
@@ -85,17 +114,43 @@ export default function CVBuilder() {
             <span className="font-display font-bold">CV Builder</span>
           </Link>
           
-          <Button variant="hero" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
+          <div className="flex gap-2">
+            {hasContent && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleAIPolish}
+                disabled={isChecking}
+              >
+                {isChecking ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Wand2 className="h-4 w-4 mr-2" />
+                )}
+                AI Polish
+              </Button>
+            )}
+            <Button 
+              variant="hero" 
+              size="sm" 
+              onClick={handleDownload}
+              disabled={isExporting || !hasContent}
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Download PDF
+            </Button>
+          </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
         {/* Step indicator */}
         <div className="mb-8">
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <button
@@ -151,8 +206,16 @@ export default function CVBuilder() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button variant="hero">
-                  <Download className="mr-2 h-4 w-4" />
+                <Button 
+                  variant="hero" 
+                  onClick={handleDownload}
+                  disabled={isExporting || !hasContent}
+                >
+                  {isExporting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
                   Download CV
                 </Button>
               )}
@@ -164,9 +227,19 @@ export default function CVBuilder() {
             <div className="h-full overflow-auto rounded-2xl border border-border bg-muted/30 p-4">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-display font-semibold text-muted-foreground">Live Preview</h2>
+                {hasContent && (
+                  <Button variant="ghost" size="sm" onClick={handleAIPolish} disabled={isChecking}>
+                    {isChecking ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-4 w-4 mr-1" />
+                    )}
+                    Polish with AI
+                  </Button>
+                )}
               </div>
-              <div className="transform scale-[0.85] origin-top">
-                <CVPreview data={cvData} />
+              <div id="cv-preview" className="transform scale-[0.75] origin-top">
+                <TemplateRenderer data={cvData} templateId={selectedTemplate} />
               </div>
             </div>
           </div>

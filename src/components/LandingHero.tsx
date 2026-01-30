@@ -63,9 +63,11 @@ export function LandingHero() {
                   <Sparkles className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button variant="heroOutline" size="xl">
-                View Examples
-              </Button>
+              <Link to="/example">
+                <Button variant="heroOutline" size="xl">
+                  View Examples
+                </Button>
+              </Link>
             </div>
             
             <p className="mt-6 text-sm text-primary-foreground/60 animate-fade-in" style={{ animationDelay: '0.4s' }}>
