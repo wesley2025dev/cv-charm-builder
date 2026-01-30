@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { CVData, emptyCVData, Experience, Education } from "@/types/cv";
+import { TemplateId } from "@/types/templates";
 
 export function useCVBuilder() {
   const [cvData, setCVData] = useState<CVData>(emptyCVData);
   const [currentStep, setCurrentStep] = useState(0);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern");
 
   const updatePersonalInfo = (field: keyof CVData["personalInfo"], value: string) => {
     setCVData((prev) => ({
@@ -85,13 +87,19 @@ export function useCVBuilder() {
     }));
   };
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
+  const setCVDataDirectly = (data: CVData) => {
+    setCVData(data);
+  };
+
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 4));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
   const goToStep = (step: number) => setCurrentStep(step);
 
   return {
     cvData,
     currentStep,
+    selectedTemplate,
+    setSelectedTemplate,
     updatePersonalInfo,
     addExperience,
     updateExperience,
@@ -101,6 +109,7 @@ export function useCVBuilder() {
     removeEducation,
     addSkill,
     removeSkill,
+    setCVDataDirectly,
     nextStep,
     prevStep,
     goToStep,
