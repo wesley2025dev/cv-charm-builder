@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Education } from "@/types/cv";
 import { Plus, Trash2, GraduationCap, Calendar, Edit2 } from "lucide-react";
+import { useQualificationValidator } from "@/hooks/useQualificationValidator";
+import { QualificationValidationFeedback } from "./QualificationValidationFeedback";
+import { toast } from "sonner";
 
 interface EducationFormProps {
   education: Education[];
@@ -14,6 +17,7 @@ interface EducationFormProps {
 
 export function EducationForm({ education, onAdd, onUpdate, onRemove }: EducationFormProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [duplicateWarningDismissed, setDuplicateWarningDismissed] = useState(false);
   const [newEdu, setNewEdu] = useState({
     institution: "",
     degree: "",
@@ -23,19 +27,108 @@ export function EducationForm({ education, onAdd, onUpdate, onRemove }: Educatio
     gpa: "",
   });
 
-  const handleAdd = () => {
-    if (newEdu.institution && newEdu.degree) {
-      onAdd(newEdu);
-      setNewEdu({
-        institution: "",
-        degree: "",
-        field: "",
-        startDate: "",
-        endDate: "",
-        gpa: "",
-      });
-      setIsAdding(false);
+  const { 
+    validationState, 
+    validateWithDebounce, 
+    clearValidation, 
+    checkLocalDuplicate 
+  } = useQualificationValidator();
+
+  // Trigger validation when key fields change
+  useEffect(() => {
+    if (isAdding && (newEdu.degree.trim() || newEdu.institution.trim())) {
+      setDuplicateWarningDismissed(false);
+      validateWithDebounce(newEdu, education);
     }
+  }, [newEdu.degree, newEdu.field, newEdu.institution, isAdding, education, validateWithDebounce]);
+
+  // Check if normalized values differ from current input
+  const hasNormalizationChanges = useMemo(() => {
+    if (!validationState.result?.normalized) return false;
+    const { normalized } = validationState.result;
+    return (
+      normalized.degree !== newEdu.degree ||
+      normalized.field !== newEdu.field ||
+      normalized.institution !== newEdu.institution
+    );
+  }, [validationState.result, newEdu]);
+
+  const handleApplyNormalized = () => {
+    if (validationState.result?.normalized) {
+      const { normalized } = validationState.result;
+      setNewEdu((prev) => ({
+        ...prev,
+        degree: normalized.degree || prev.degree,
+        field: normalized.field || prev.field,
+        institution: normalized.institution || prev.institution,
+      }));
+      toast.success("AI suggestions applied!");
+    }
+  };
+
+  const handleAdd = () => {
+    if (!newEdu.institution || !newEdu.degree) {
+      toast.error("Please fill in the degree and institution fields");
+      return;
+    }
+
+    // Check for local duplicates first
+    const localDupe = checkLocalDuplicate(newEdu, education);
+    if (localDupe && !duplicateWarningDismissed) {
+      toast.error("This qualification appears to be a duplicate!");
+      return;
+    }
+
+    // Check AI validation result for duplicates
+    const result = validationState.result;
+    if (result?.duplicateOf && !duplicateWarningDismissed) {
+      toast.error("Duplicate qualification detected. Dismiss the warning to add anyway.");
+      return;
+    }
+
+    // Check if qualification is invalid
+    if (result && !result.isValid) {
+      toast.error(result.validationMessage || "This qualification doesn't appear to be valid.");
+      return;
+    }
+
+    // Use normalized values if available and high confidence
+    const finalEdu = result?.normalized && result.confidence > 0.7
+      ? {
+          ...newEdu,
+          degree: result.normalized.degree || newEdu.degree,
+          field: result.normalized.field || newEdu.field,
+          institution: result.normalized.institution || newEdu.institution,
+        }
+      : newEdu;
+
+    onAdd(finalEdu);
+    setNewEdu({
+      institution: "",
+      degree: "",
+      field: "",
+      startDate: "",
+      endDate: "",
+      gpa: "",
+    });
+    setIsAdding(false);
+    clearValidation();
+    setDuplicateWarningDismissed(false);
+    toast.success("Education added successfully!");
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setNewEdu({
+      institution: "",
+      degree: "",
+      field: "",
+      startDate: "",
+      endDate: "",
+      gpa: "",
+    });
+    clearValidation();
+    setDuplicateWarningDismissed(false);
   };
 
   return (
@@ -145,11 +238,28 @@ export function EducationForm({ education, onAdd, onUpdate, onRemove }: Educatio
               />
             </div>
           </div>
+
+          {/* Validation Feedback */}
+          <div className="mt-4">
+            <QualificationValidationFeedback
+              isValidating={validationState.isValidating}
+              result={validationState.result}
+              error={validationState.error}
+              onApplyNormalized={handleApplyNormalized}
+              onDismissDuplicate={() => setDuplicateWarningDismissed(true)}
+              hasChanges={hasNormalizationChanges}
+            />
+          </div>
+
           <div className="mt-4 flex gap-2">
-            <Button onClick={handleAdd} variant="accent">
+            <Button 
+              onClick={handleAdd} 
+              variant="accent"
+              disabled={validationState.isValidating}
+            >
               Add Education
             </Button>
-            <Button variant="ghost" onClick={() => setIsAdding(false)}>
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
             </Button>
           </div>
