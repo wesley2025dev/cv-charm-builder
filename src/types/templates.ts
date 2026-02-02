@@ -1,4 +1,4 @@
-export type TemplateId = "modern" | "executive" | "creative" | "minimal" | "bold";
+export type TemplateId = "modern" | "executive" | "creative" | "minimal" | "bold" | "tech" | "artistic" | "finance";
 
 export interface CVTemplate {
   id: TemplateId;
@@ -72,6 +72,42 @@ export const cvTemplates: CVTemplate[] = [
       headerText: "text-white",
       accent: "text-blue-600",
       sectionTitle: "text-blue-500",
+    },
+  },
+  {
+    id: "tech",
+    name: "Developer Terminal",
+    description: "Perfect for software engineers and tech professionals",
+    preview: "💻",
+    colors: {
+      header: "bg-slate-950",
+      headerText: "text-emerald-400",
+      accent: "text-cyan-400",
+      sectionTitle: "text-yellow-400",
+    },
+  },
+  {
+    id: "artistic",
+    name: "Creative Portfolio",
+    description: "Ideal for designers, artists, and creative professionals",
+    preview: "🎨",
+    colors: {
+      header: "bg-gradient-to-br from-rose-100 to-orange-100",
+      headerText: "text-rose-900",
+      accent: "text-orange-500",
+      sectionTitle: "text-rose-400",
+    },
+  },
+  {
+    id: "finance",
+    name: "Executive Finance",
+    description: "Conservative elegance for banking and finance roles",
+    preview: "📈",
+    colors: {
+      header: "bg-slate-900",
+      headerText: "text-white",
+      accent: "text-amber-500",
+      sectionTitle: "text-slate-500",
     },
   },
 ];

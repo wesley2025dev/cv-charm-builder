@@ -5,6 +5,9 @@ import { ExecutiveTemplate } from "./templates/ExecutiveTemplate";
 import { CreativeTemplate } from "./templates/CreativeTemplate";
 import { MinimalTemplate } from "./templates/MinimalTemplate";
 import { BoldTemplate } from "./templates/BoldTemplate";
+import { TechTemplate } from "./templates/TechTemplate";
+import { ArtisticTemplate } from "./templates/ArtisticTemplate";
+import { FinanceTemplate } from "./templates/FinanceTemplate";
 
 interface TemplateRendererProps {
   data: CVData;
@@ -38,6 +41,12 @@ export function TemplateRenderer({ data, templateId }: TemplateRendererProps) {
       return <MinimalTemplate data={data} />;
     case "bold":
       return <BoldTemplate data={data} />;
+    case "tech":
+      return <TechTemplate data={data} />;
+    case "artistic":
+      return <ArtisticTemplate data={data} />;
+    case "finance":
+      return <FinanceTemplate data={data} />;
     default:
       return <ModernTemplate data={data} />;
   }
