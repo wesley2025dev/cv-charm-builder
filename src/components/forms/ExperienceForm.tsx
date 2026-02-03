@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Experience } from "@/types/cv";
 import { Plus, Trash2, Building2, Calendar, Edit2 } from "lucide-react";
+import { useAutoCorrect } from "@/hooks/useAutoCorrect";
+import { AutoCorrectSuggestion } from "./AutoCorrectSuggestion";
 
 interface ExperienceFormProps {
   experiences: Experience[];
@@ -26,6 +28,23 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
     highlights: [] as string[],
   });
 
+  const { isChecking, pendingCorrection, checkTextDebounced, applyCorrection, dismissCorrection, clearPending } = useAutoCorrect();
+
+  // Check description for corrections when user stops typing
+  useEffect(() => {
+    if (newExp.description && newExp.description.length > 15) {
+      checkTextDebounced(newExp.description, () => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newExp.description]);
+
+  const handleApplyCorrection = () => {
+    const corrected = applyCorrection();
+    if (corrected) {
+      setNewExp({ ...newExp, description: corrected });
+    }
+  };
+
   const handleAdd = () => {
     if (newExp.company && newExp.position) {
       onAdd(newExp);
@@ -39,7 +58,22 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
         highlights: [],
       });
       setIsAdding(false);
+      clearPending();
     }
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setNewExp({
+      company: "",
+      position: "",
+      startDate: "",
+      endDate: "",
+      current: false,
+      description: "",
+      highlights: [],
+    });
+    clearPending();
   };
 
   return (
@@ -152,13 +186,28 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
                 onChange={(e) => setNewExp({ ...newExp, description: e.target.value })}
                 className="min-h-[100px]"
               />
+              {isChecking && (
+                <AutoCorrectSuggestion
+                  isChecking={true}
+                  onApply={() => {}}
+                  onDismiss={() => {}}
+                />
+              )}
+              {pendingCorrection?.hasCorrections && (
+                <AutoCorrectSuggestion
+                  original={pendingCorrection.original}
+                  corrected={pendingCorrection.corrected}
+                  onApply={handleApplyCorrection}
+                  onDismiss={dismissCorrection}
+                />
+              )}
             </div>
           </div>
           <div className="mt-4 flex gap-2">
             <Button onClick={handleAdd} variant="accent">
               Add Experience
             </Button>
-            <Button variant="ghost" onClick={() => setIsAdding(false)}>
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
             </Button>
           </div>
