@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { SmartInput } from "@/components/ui/smart-input";
+import { SmartTextarea } from "@/components/ui/smart-textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Experience } from "@/types/cv";
-import { Plus, Trash2, Building2, Calendar, Edit2 } from "lucide-react";
-import { useAutoCorrect } from "@/hooks/useAutoCorrect";
-import { AutoCorrectSuggestion } from "./AutoCorrectSuggestion";
+import { Plus, Trash2, Building2, Calendar, Edit2, Sparkles } from "lucide-react";
+import { useInlineTypingAssist } from "@/hooks/useInlineTypingAssist";
+import { toast } from "sonner";
 
 interface ExperienceFormProps {
   experiences: Experience[];
@@ -28,38 +29,38 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
     highlights: [] as string[],
   });
 
-  const { isChecking, pendingCorrection, checkTextDebounced, applyCorrection, dismissCorrection, clearPending } = useAutoCorrect();
+  const [isDescriptionValid, setIsDescriptionValid] = useState(true);
+  const { validateBeforeSave } = useInlineTypingAssist({ fieldType: "description" });
 
-  // Check description for corrections when user stops typing
-  useEffect(() => {
-    if (newExp.description && newExp.description.length > 15) {
-      checkTextDebounced(newExp.description, () => {});
+  const handleAdd = async () => {
+    if (!newExp.company || !newExp.position) {
+      toast.error("Please fill in company and position");
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newExp.description]);
 
-  const handleApplyCorrection = () => {
-    const corrected = applyCorrection();
-    if (corrected) {
-      setNewExp({ ...newExp, description: corrected });
+    // Validate description before saving
+    if (newExp.description) {
+      const validation = await validateBeforeSave(newExp.description);
+      if (!validation.isValid) {
+        toast.error("Please fix the description before saving", {
+          description: validation.reason,
+        });
+        return;
+      }
     }
-  };
 
-  const handleAdd = () => {
-    if (newExp.company && newExp.position) {
-      onAdd(newExp);
-      setNewExp({
-        company: "",
-        position: "",
-        startDate: "",
-        endDate: "",
-        current: false,
-        description: "",
-        highlights: [],
-      });
-      setIsAdding(false);
-      clearPending();
-    }
+    onAdd(newExp);
+    setNewExp({
+      company: "",
+      position: "",
+      startDate: "",
+      endDate: "",
+      current: false,
+      description: "",
+      highlights: [],
+    });
+    setIsAdding(false);
+    toast.success("Experience added successfully");
   };
 
   const handleCancel = () => {
@@ -73,7 +74,6 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
       description: "",
       highlights: [],
     });
-    clearPending();
   };
 
   return (
@@ -128,7 +128,13 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
       {/* Add new experience form */}
       {isAdding ? (
         <div className="rounded-xl border-2 border-dashed border-accent/30 bg-accent/5 p-6 animate-scale-in">
-          <h3 className="font-semibold mb-4">Add New Experience</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="font-semibold">Add New Experience</h3>
+            <div className="flex items-center gap-1 text-xs text-accent">
+              <Sparkles className="h-3 w-3" />
+              AI-assisted
+            </div>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="company">Company Name</Label>
@@ -141,11 +147,12 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
             </div>
             <div className="space-y-2">
               <Label htmlFor="position">Position/Title</Label>
-              <Input
+              <SmartInput
                 id="position"
                 placeholder="Senior Developer"
                 value={newExp.position}
-                onChange={(e) => setNewExp({ ...newExp, position: e.target.value })}
+                onChange={(value) => setNewExp({ ...newExp, position: value })}
+                fieldType="title"
               />
             </div>
             <div className="space-y-2">
@@ -179,32 +186,22 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
+              <SmartTextarea
                 id="description"
                 placeholder="Describe your key responsibilities and achievements..."
                 value={newExp.description}
-                onChange={(e) => setNewExp({ ...newExp, description: e.target.value })}
+                onChange={(value) => setNewExp({ ...newExp, description: value })}
+                fieldType="description"
+                onValidationChange={setIsDescriptionValid}
                 className="min-h-[100px]"
               />
-              {isChecking && (
-                <AutoCorrectSuggestion
-                  isChecking={true}
-                  onApply={() => {}}
-                  onDismiss={() => {}}
-                />
-              )}
-              {pendingCorrection?.hasCorrections && (
-                <AutoCorrectSuggestion
-                  original={pendingCorrection.original}
-                  corrected={pendingCorrection.corrected}
-                  onApply={handleApplyCorrection}
-                  onDismiss={dismissCorrection}
-                />
-              )}
+              <p className="text-xs text-muted-foreground">
+                Press <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-medium">Tab</span> to accept suggestions
+              </p>
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <Button onClick={handleAdd} variant="accent">
+            <Button onClick={handleAdd} variant="accent" disabled={!isDescriptionValid}>
               Add Experience
             </Button>
             <Button variant="ghost" onClick={handleCancel}>
