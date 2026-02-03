@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CVData } from "@/types/cv";
 import { User, Mail, Phone, MapPin, Briefcase, Globe, Linkedin } from "lucide-react";
+import { useAutoCorrect } from "@/hooks/useAutoCorrect";
+import { AutoCorrectSuggestion } from "./AutoCorrectSuggestion";
 
 interface PersonalInfoFormProps {
   data: CVData["personalInfo"];
@@ -10,6 +13,40 @@ interface PersonalInfoFormProps {
 }
 
 export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
+  const { isChecking, pendingCorrection, checkTextDebounced, applyCorrection, dismissCorrection, clearPending } = useAutoCorrect();
+  const [activeField, setActiveField] = useState<keyof CVData["personalInfo"] | null>(null);
+
+  // Check summary for corrections when user stops typing
+  useEffect(() => {
+    if (data.summary && activeField === "summary") {
+      checkTextDebounced(data.summary, () => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.summary, activeField]);
+
+  // Check title for corrections
+  useEffect(() => {
+    if (data.title && activeField === "title") {
+      checkTextDebounced(data.title, () => {}, 2000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.title, activeField]);
+
+  const handleApplyCorrection = () => {
+    const corrected = applyCorrection();
+    if (corrected && activeField) {
+      onUpdate(activeField, corrected);
+    }
+  };
+
+  const handleFieldFocus = (field: keyof CVData["personalInfo"]) => {
+    setActiveField(field);
+  };
+
+  const handleFieldBlur = () => {
+    // Keep the active field set briefly to allow correction to complete
+  };
+
   return (
     <div className="space-y-6 animate-fade-up">
       <div>
@@ -28,6 +65,8 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
             placeholder="John Smith"
             value={data.fullName}
             onChange={(e) => onUpdate("fullName", e.target.value)}
+            onFocus={() => handleFieldFocus("fullName")}
+            onBlur={handleFieldBlur}
             className="h-12"
           />
         </div>
@@ -42,8 +81,19 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
             placeholder="Senior Software Engineer"
             value={data.title}
             onChange={(e) => onUpdate("title", e.target.value)}
+            onFocus={() => handleFieldFocus("title")}
+            onBlur={handleFieldBlur}
             className="h-12"
           />
+          {activeField === "title" && pendingCorrection?.hasCorrections && (
+            <AutoCorrectSuggestion
+              isChecking={isChecking}
+              original={pendingCorrection.original}
+              corrected={pendingCorrection.corrected}
+              onApply={handleApplyCorrection}
+              onDismiss={dismissCorrection}
+            />
+          )}
         </div>
 
         <div className="space-y-2">
@@ -125,8 +175,25 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
             placeholder="Write 2-3 sentences about your professional background, key skills, and what you're looking for..."
             value={data.summary}
             onChange={(e) => onUpdate("summary", e.target.value)}
+            onFocus={() => handleFieldFocus("summary")}
+            onBlur={handleFieldBlur}
             className="min-h-[120px] resize-none"
           />
+          {activeField === "summary" && isChecking && (
+            <AutoCorrectSuggestion
+              isChecking={true}
+              onApply={() => {}}
+              onDismiss={() => {}}
+            />
+          )}
+          {activeField === "summary" && pendingCorrection?.hasCorrections && (
+            <AutoCorrectSuggestion
+              original={pendingCorrection.original}
+              corrected={pendingCorrection.corrected}
+              onApply={handleApplyCorrection}
+              onDismiss={dismissCorrection}
+            />
+          )}
           <p className="text-xs text-muted-foreground">
             Tip: Focus on your achievements and what value you bring to employers
           </p>

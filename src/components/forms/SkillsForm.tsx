@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Lightbulb } from "lucide-react";
+import { Plus, X, Lightbulb, Loader2, Sparkles } from "lucide-react";
+import { useAutoCorrect } from "@/hooks/useAutoCorrect";
 
 interface SkillsFormProps {
   skills: string[];
@@ -19,12 +20,27 @@ const suggestedSkills = [
 
 export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
   const [newSkill, setNewSkill] = useState("");
+  const [correctedSkill, setCorrectedSkill] = useState<string | null>(null);
+  const { isChecking, correctText } = useAutoCorrect();
+  const [isCorrectingOnAdd, setIsCorrectingOnAdd] = useState(false);
 
-  const handleAdd = () => {
-    if (newSkill.trim()) {
-      onAdd(newSkill);
-      setNewSkill("");
+  const handleAdd = async () => {
+    if (!newSkill.trim()) return;
+    
+    setIsCorrectingOnAdd(true);
+    
+    // Auto-correct the skill before adding
+    const result = await correctText(newSkill.trim());
+    const finalSkill = result.hasCorrections ? result.corrected : newSkill.trim();
+    
+    // Normalize and add
+    if (finalSkill && !skills.some(s => s.toLowerCase() === finalSkill.toLowerCase())) {
+      onAdd(finalSkill);
     }
+    
+    setNewSkill("");
+    setCorrectedSkill(null);
+    setIsCorrectingOnAdd(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -35,7 +51,7 @@ export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
   };
 
   const availableSuggestions = suggestedSkills.filter(
-    (skill) => !skills.includes(skill)
+    (skill) => !skills.some(s => s.toLowerCase() === skill.toLowerCase())
   );
 
   return (
@@ -46,17 +62,35 @@ export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
       </div>
 
       {/* Add skill input */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="Type a skill and press Enter..."
-          value={newSkill}
-          onChange={(e) => setNewSkill(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="h-12"
-        />
-        <Button onClick={handleAdd} variant="accent" className="h-12 px-6">
-          <Plus className="h-5 w-5" />
-        </Button>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              placeholder="Type a skill and press Enter..."
+              value={newSkill}
+              onChange={(e) => setNewSkill(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="h-12"
+              disabled={isCorrectingOnAdd}
+            />
+          </div>
+          <Button 
+            onClick={handleAdd} 
+            variant="accent" 
+            className="h-12 px-6"
+            disabled={isCorrectingOnAdd || !newSkill.trim()}
+          >
+            {isCorrectingOnAdd ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Plus className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <Sparkles className="h-3 w-3" />
+          Skills are automatically spell-checked and normalized
+        </p>
       </div>
 
       {/* Current skills */}
