@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SmartInput } from "@/components/ui/smart-input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Lightbulb, Loader2, Sparkles } from "lucide-react";
+import { Plus, X, Lightbulb, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 import { useAutoCorrect } from "@/hooks/useAutoCorrect";
+import { useInlineTypingAssist } from "@/hooks/useInlineTypingAssist";
+import { toast } from "sonner";
 
 interface SkillsFormProps {
   skills: string[];
@@ -20,31 +22,61 @@ const suggestedSkills = [
 
 export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
   const [newSkill, setNewSkill] = useState("");
-  const [correctedSkill, setCorrectedSkill] = useState<string | null>(null);
-  const { isChecking, correctText } = useAutoCorrect();
-  const [isCorrectingOnAdd, setIsCorrectingOnAdd] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isSkillValid, setIsSkillValid] = useState(true);
+  const { correctText } = useAutoCorrect();
+  const { validateBeforeSave } = useInlineTypingAssist({ fieldType: "skill" });
 
-  const handleAdd = async () => {
+  const handleAdd = useCallback(async () => {
     if (!newSkill.trim()) return;
     
-    setIsCorrectingOnAdd(true);
-    
-    // Auto-correct the skill before adding
-    const result = await correctText(newSkill.trim());
-    const finalSkill = result.hasCorrections ? result.corrected : newSkill.trim();
-    
-    // Normalize and add
-    if (finalSkill && !skills.some(s => s.toLowerCase() === finalSkill.toLowerCase())) {
+    setIsValidating(true);
+
+    try {
+      // First validate the skill makes sense
+      const validation = await validateBeforeSave(newSkill.trim());
+      
+      if (!validation.isValid) {
+        toast.error("Invalid skill entry", {
+          description: validation.reason,
+        });
+        setIsValidating(false);
+        return;
+      }
+
+      // Then auto-correct spelling
+      const result = await correctText(newSkill.trim());
+      const finalSkill = result.hasCorrections ? result.corrected : newSkill.trim();
+      
+      // Check for duplicates
+      if (skills.some(s => s.toLowerCase() === finalSkill.toLowerCase())) {
+        toast.error("Skill already exists", {
+          description: `"${finalSkill}" is already in your skills list.`,
+        });
+        setIsValidating(false);
+        return;
+      }
+
       onAdd(finalSkill);
+      setNewSkill("");
+      
+      if (result.hasCorrections) {
+        toast.success(`Added "${finalSkill}"`, {
+          description: `Auto-corrected from "${newSkill.trim()}"`,
+        });
+      }
+    } catch (error) {
+      console.error("Error adding skill:", error);
+      // Still add the skill if validation fails
+      onAdd(newSkill.trim());
+      setNewSkill("");
+    } finally {
+      setIsValidating(false);
     }
-    
-    setNewSkill("");
-    setCorrectedSkill(null);
-    setIsCorrectingOnAdd(false);
-  };
+  }, [newSkill, skills, onAdd, correctText, validateBeforeSave]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleAdd();
     }
@@ -65,22 +97,25 @@ export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Input
+            <SmartInput
               placeholder="Type a skill and press Enter..."
               value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
+              onChange={setNewSkill}
               onKeyDown={handleKeyDown}
+              fieldType="skill"
+              onValidationChange={setIsSkillValid}
               className="h-12"
-              disabled={isCorrectingOnAdd}
+              disabled={isValidating}
+              showValidation={true}
             />
           </div>
           <Button 
             onClick={handleAdd} 
             variant="accent" 
             className="h-12 px-6"
-            disabled={isCorrectingOnAdd || !newSkill.trim()}
+            disabled={isValidating || !newSkill.trim() || !isSkillValid}
           >
-            {isCorrectingOnAdd ? (
+            {isValidating ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <Plus className="h-5 w-5" />
@@ -89,14 +124,14 @@ export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
         </div>
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <Sparkles className="h-3 w-3" />
-          Skills are automatically spell-checked and normalized
+          Skills are validated and auto-corrected before saving
         </p>
       </div>
 
       {/* Current skills */}
       {skills.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">Your Skills</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Your Skills ({skills.length})</h3>
           <div className="flex flex-wrap gap-2">
             {skills.map((skill) => (
               <Badge

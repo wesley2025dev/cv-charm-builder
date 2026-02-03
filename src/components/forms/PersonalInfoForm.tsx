@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { SmartInput } from "@/components/ui/smart-input";
+import { SmartTextarea } from "@/components/ui/smart-textarea";
 import { CVData } from "@/types/cv";
-import { User, Mail, Phone, MapPin, Briefcase, Globe, Linkedin } from "lucide-react";
-import { useAutoCorrect } from "@/hooks/useAutoCorrect";
-import { AutoCorrectSuggestion } from "./AutoCorrectSuggestion";
+import { User, Mail, Phone, MapPin, Briefcase, Globe, Linkedin, Sparkles } from "lucide-react";
 
 interface PersonalInfoFormProps {
   data: CVData["personalInfo"];
@@ -13,38 +12,10 @@ interface PersonalInfoFormProps {
 }
 
 export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
-  const { isChecking, pendingCorrection, checkTextDebounced, applyCorrection, dismissCorrection, clearPending } = useAutoCorrect();
-  const [activeField, setActiveField] = useState<keyof CVData["personalInfo"] | null>(null);
+  const [validationStates, setValidationStates] = useState<Record<string, boolean>>({});
 
-  // Check summary for corrections when user stops typing
-  useEffect(() => {
-    if (data.summary && activeField === "summary") {
-      checkTextDebounced(data.summary, () => {});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.summary, activeField]);
-
-  // Check title for corrections
-  useEffect(() => {
-    if (data.title && activeField === "title") {
-      checkTextDebounced(data.title, () => {}, 2000);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.title, activeField]);
-
-  const handleApplyCorrection = () => {
-    const corrected = applyCorrection();
-    if (corrected && activeField) {
-      onUpdate(activeField, corrected);
-    }
-  };
-
-  const handleFieldFocus = (field: keyof CVData["personalInfo"]) => {
-    setActiveField(field);
-  };
-
-  const handleFieldBlur = () => {
-    // Keep the active field set briefly to allow correction to complete
+  const handleValidationChange = (field: string) => (isValid: boolean) => {
+    setValidationStates(prev => ({ ...prev, [field]: isValid }));
   };
 
   return (
@@ -52,6 +23,14 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
       <div>
         <h2 className="font-display text-2xl font-bold mb-2">Personal Information</h2>
         <p className="text-muted-foreground">Let employers know who you are and how to reach you</p>
+      </div>
+
+      {/* AI assistance notice */}
+      <div className="rounded-lg bg-accent/5 border border-accent/20 p-3 flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-accent shrink-0" />
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium text-accent">AI Typing Assist</span> — Get real-time suggestions as you type. Press <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-medium">Tab</span> to accept.
+        </p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
@@ -65,8 +44,6 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
             placeholder="John Smith"
             value={data.fullName}
             onChange={(e) => onUpdate("fullName", e.target.value)}
-            onFocus={() => handleFieldFocus("fullName")}
-            onBlur={handleFieldBlur}
             className="h-12"
           />
         </div>
@@ -76,24 +53,15 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
             <Briefcase className="h-4 w-4 text-muted-foreground" />
             Professional Title
           </Label>
-          <Input
+          <SmartInput
             id="title"
             placeholder="Senior Software Engineer"
             value={data.title}
-            onChange={(e) => onUpdate("title", e.target.value)}
-            onFocus={() => handleFieldFocus("title")}
-            onBlur={handleFieldBlur}
+            onChange={(value) => onUpdate("title", value)}
+            fieldType="title"
+            onValidationChange={handleValidationChange("title")}
             className="h-12"
           />
-          {activeField === "title" && pendingCorrection?.hasCorrections && (
-            <AutoCorrectSuggestion
-              isChecking={isChecking}
-              original={pendingCorrection.original}
-              corrected={pendingCorrection.corrected}
-              onApply={handleApplyCorrection}
-              onDismiss={dismissCorrection}
-            />
-          )}
         </div>
 
         <div className="space-y-2">
@@ -170,30 +138,15 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
 
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="summary">Professional Summary</Label>
-          <Textarea
+          <SmartTextarea
             id="summary"
             placeholder="Write 2-3 sentences about your professional background, key skills, and what you're looking for..."
             value={data.summary}
-            onChange={(e) => onUpdate("summary", e.target.value)}
-            onFocus={() => handleFieldFocus("summary")}
-            onBlur={handleFieldBlur}
-            className="min-h-[120px] resize-none"
+            onChange={(value) => onUpdate("summary", value)}
+            fieldType="summary"
+            onValidationChange={handleValidationChange("summary")}
+            className="min-h-[120px]"
           />
-          {activeField === "summary" && isChecking && (
-            <AutoCorrectSuggestion
-              isChecking={true}
-              onApply={() => {}}
-              onDismiss={() => {}}
-            />
-          )}
-          {activeField === "summary" && pendingCorrection?.hasCorrections && (
-            <AutoCorrectSuggestion
-              original={pendingCorrection.original}
-              corrected={pendingCorrection.corrected}
-              onApply={handleApplyCorrection}
-              onDismiss={dismissCorrection}
-            />
-          )}
           <p className="text-xs text-muted-foreground">
             Tip: Focus on your achievements and what value you bring to employers
           </p>
