@@ -26,13 +26,16 @@ const SmartInput = React.forwardRef<HTMLInputElement, SmartInputProps>(
 
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    React.useEffect(() => {
-      onTextChange(value);
-    }, [value, onTextChange]);
+    const onValidationChangeRef = React.useRef(onValidationChange);
+    onValidationChangeRef.current = onValidationChange;
 
     React.useEffect(() => {
-      onValidationChange?.(!validationError);
-    }, [validationError, onValidationChange]);
+      onTextChange(value);
+    }, [value]); // Remove onTextChange from deps - it's stable via useCallback
+
+    React.useEffect(() => {
+      onValidationChangeRef.current?.(!validationError);
+    }, [validationError]); // Use ref to avoid dependency on callback
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Tab" && ghostSuggestion) {
