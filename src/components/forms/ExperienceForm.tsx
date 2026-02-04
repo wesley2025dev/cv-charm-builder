@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SmartInput } from "@/components/ui/smart-input";
 import { SmartTextarea } from "@/components/ui/smart-textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SectionPolishButton } from "./SectionPolishButton";
 import { Experience } from "@/types/cv";
 import { Plus, Trash2, Building2, Calendar, Edit2, Sparkles } from "lucide-react";
 import { useInlineTypingAssist } from "@/hooks/useInlineTypingAssist";
@@ -76,11 +77,40 @@ export function ExperienceForm({ experiences, onAdd, onUpdate, onRemove }: Exper
     });
   };
 
+  // Create polish fields for all experiences
+  const polishFields = useMemo(() => {
+    const fields: Array<{ value: string; onUpdate: (value: string) => void }> = [];
+    experiences.forEach(exp => {
+      fields.push({
+        value: exp.position,
+        onUpdate: (v: string) => onUpdate(exp.id, { position: v }),
+      });
+      fields.push({
+        value: exp.description,
+        onUpdate: (v: string) => onUpdate(exp.id, { description: v }),
+      });
+      exp.highlights.forEach((h, idx) => {
+        fields.push({
+          value: h,
+          onUpdate: (v: string) => {
+            const newHighlights = [...exp.highlights];
+            newHighlights[idx] = v;
+            onUpdate(exp.id, { highlights: newHighlights });
+          },
+        });
+      });
+    });
+    return fields;
+  }, [experiences, onUpdate]);
+
   return (
     <div className="space-y-6 animate-fade-up">
-      <div>
-        <h2 className="font-display text-2xl font-bold mb-2">Work Experience</h2>
-        <p className="text-muted-foreground">Add your relevant work history, starting with the most recent</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-bold mb-2">Work Experience</h2>
+          <p className="text-muted-foreground">Add your relevant work history, starting with the most recent</p>
+        </div>
+        <SectionPolishButton fields={polishFields} sectionName="Experience" />
       </div>
 
       {/* Existing experiences */}

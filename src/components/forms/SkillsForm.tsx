@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { SmartInput } from "@/components/ui/smart-input";
 import { Badge } from "@/components/ui/badge";
+import { SectionPolishButton } from "./SectionPolishButton";
 import { Plus, X, Lightbulb, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 import { useAutoCorrect } from "@/hooks/useAutoCorrect";
 import { useInlineTypingAssist } from "@/hooks/useInlineTypingAssist";
@@ -11,6 +12,7 @@ interface SkillsFormProps {
   skills: string[];
   onAdd: (skill: string) => void;
   onRemove: (skill: string) => void;
+  onUpdateSkill?: (oldSkill: string, newSkill: string) => void;
 }
 
 const suggestedSkills = [
@@ -20,12 +22,29 @@ const suggestedSkills = [
   "Agile/Scrum", "UI/UX Design", "Excel", "Marketing", "Sales"
 ];
 
-export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
+export function SkillsForm({ skills, onAdd, onRemove, onUpdateSkill }: SkillsFormProps) {
   const [newSkill, setNewSkill] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isSkillValid, setIsSkillValid] = useState(true);
+  const [polishedSkills, setPolishedSkills] = useState<string[]>([]);
   const { correctText } = useAutoCorrect();
   const { validateBeforeSave } = useInlineTypingAssist({ fieldType: "skill" });
+
+  // Create polish fields for skills - uses local state to track changes
+  const polishFields = useMemo(() => {
+    return skills.map((skill, index) => ({
+      value: skill,
+      onUpdate: (newValue: string) => {
+        if (newValue !== skill && onUpdateSkill) {
+          onUpdateSkill(skill, newValue);
+        } else if (newValue !== skill) {
+          // Fallback: remove old and add new
+          onRemove(skill);
+          onAdd(newValue);
+        }
+      },
+    }));
+  }, [skills, onAdd, onRemove, onUpdateSkill]);
 
   const handleAdd = useCallback(async () => {
     if (!newSkill.trim()) return;
@@ -88,9 +107,12 @@ export function SkillsForm({ skills, onAdd, onRemove }: SkillsFormProps) {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <div>
-        <h2 className="font-display text-2xl font-bold mb-2">Skills</h2>
-        <p className="text-muted-foreground">Add your key skills and competencies</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-bold mb-2">Skills</h2>
+          <p className="text-muted-foreground">Add your key skills and competencies</p>
+        </div>
+        <SectionPolishButton fields={polishFields} sectionName="Skills" />
       </div>
 
       {/* Add skill input */}

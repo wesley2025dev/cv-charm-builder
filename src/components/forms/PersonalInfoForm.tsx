@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SmartInput } from "@/components/ui/smart-input";
 import { SmartTextarea } from "@/components/ui/smart-textarea";
+import { SectionPolishButton } from "./SectionPolishButton";
 import { CVData } from "@/types/cv";
 import { User, Mail, Phone, MapPin, Briefcase, Globe, Linkedin, Sparkles } from "lucide-react";
 
@@ -18,11 +19,19 @@ export function PersonalInfoForm({ data, onUpdate }: PersonalInfoFormProps) {
     setValidationStates(prev => ({ ...prev, [field]: isValid }));
   };
 
+  const polishFields = [
+    { value: data.title, onUpdate: (v: string) => onUpdate("title", v) },
+    { value: data.summary, onUpdate: (v: string) => onUpdate("summary", v) },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-up">
-      <div>
-        <h2 className="font-display text-2xl font-bold mb-2">Personal Information</h2>
-        <p className="text-muted-foreground">Let employers know who you are and how to reach you</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-bold mb-2">Personal Information</h2>
+          <p className="text-muted-foreground">Let employers know who you are and how to reach you</p>
+        </div>
+        <SectionPolishButton fields={polishFields} sectionName="Personal Info" />
       </div>
 
       {/* AI assistance notice */}
