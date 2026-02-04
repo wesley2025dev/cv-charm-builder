@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2, Loader2, Check } from "lucide-react";
+import { Wand2, Loader2, Check, Undo2 } from "lucide-react";
 import { useSpellCheck } from "@/hooks/useSpellCheck";
 import { toast } from "sonner";
 
@@ -19,6 +19,8 @@ export function SectionPolishButton({
 }: SectionPolishButtonProps) {
   const [isPolishing, setIsPolishing] = useState(false);
   const [justPolished, setJustPolished] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
+  const previousValuesRef = useRef<string[]>([]);
   const { checkAndCorrectText } = useSpellCheck();
 
   const hasContent = fields.some(f => f.value?.trim());
@@ -29,8 +31,12 @@ export function SectionPolishButton({
       return;
     }
 
+    // Store previous values for undo
+    previousValuesRef.current = fields.map(f => f.value);
+
     setIsPolishing(true);
     setJustPolished(false);
+    setCanUndo(false);
 
     try {
       const corrections = await Promise.all(
@@ -52,6 +58,7 @@ export function SectionPolishButton({
       if (hasChanges) {
         toast.success(`${sectionName} polished!`);
         setJustPolished(true);
+        setCanUndo(true);
         setTimeout(() => setJustPolished(false), 2000);
       } else {
         toast.info(`${sectionName} looks good already!`);
@@ -64,32 +71,55 @@ export function SectionPolishButton({
     }
   };
 
+  const handleUndo = () => {
+    previousValuesRef.current.forEach((value, index) => {
+      if (fields[index]) {
+        fields[index].onUpdate(value);
+      }
+    });
+    setCanUndo(false);
+    toast.success(`Reverted ${sectionName} changes`);
+  };
+
   if (!hasContent) return null;
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handlePolish}
-      disabled={isPolishing}
-      className="gap-1.5"
-    >
-      {isPolishing ? (
-        <>
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          <span>Polishing...</span>
-        </>
-      ) : justPolished ? (
-        <>
-          <Check className="h-3.5 w-3.5 text-accent" />
-          <span>Polished!</span>
-        </>
-      ) : (
-        <>
-          <Wand2 className="h-3.5 w-3.5" />
-          <span>Polish Section</span>
-        </>
+    <div className="flex items-center gap-1">
+      <Button
+        variant={variant}
+        size={size}
+        onClick={handlePolish}
+        disabled={isPolishing}
+        className="gap-1.5"
+      >
+        {isPolishing ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <span>Polishing...</span>
+          </>
+        ) : justPolished ? (
+          <>
+            <Check className="h-3.5 w-3.5 text-accent" />
+            <span>Polished!</span>
+          </>
+        ) : (
+          <>
+            <Wand2 className="h-3.5 w-3.5" />
+            <span>Polish Section</span>
+          </>
+        )}
+      </Button>
+      {canUndo && (
+        <Button
+          variant="ghost"
+          size={size}
+          onClick={handleUndo}
+          className="gap-1.5 text-muted-foreground hover:text-foreground"
+        >
+          <Undo2 className="h-3.5 w-3.5" />
+          <span>Undo</span>
+        </Button>
       )}
-    </Button>
+    </div>
   );
 }
