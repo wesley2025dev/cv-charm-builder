@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SectionPolishButton } from "./SectionPolishButton";
 import { Education } from "@/types/cv";
 import { Plus, Trash2, GraduationCap, Calendar, Edit2 } from "lucide-react";
 import { useQualificationValidator } from "@/hooks/useQualificationValidator";
@@ -131,11 +132,30 @@ export function EducationForm({ education, onAdd, onUpdate, onRemove }: Educatio
     setDuplicateWarningDismissed(false);
   };
 
+  // Create polish fields for all education entries
+  const polishFields = useMemo(() => {
+    const fields: Array<{ value: string; onUpdate: (value: string) => void }> = [];
+    education.forEach(edu => {
+      fields.push({
+        value: edu.degree,
+        onUpdate: (v: string) => onUpdate(edu.id, { degree: v }),
+      });
+      fields.push({
+        value: edu.field,
+        onUpdate: (v: string) => onUpdate(edu.id, { field: v }),
+      });
+    });
+    return fields;
+  }, [education, onUpdate]);
+
   return (
     <div className="space-y-6 animate-fade-up">
-      <div>
-        <h2 className="font-display text-2xl font-bold mb-2">Education</h2>
-        <p className="text-muted-foreground">Add your educational background</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-bold mb-2">Education</h2>
+          <p className="text-muted-foreground">Add your educational background</p>
+        </div>
+        <SectionPolishButton fields={polishFields} sectionName="Education" />
       </div>
 
       {/* Existing education */}
