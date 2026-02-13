@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CVData, emptyCVData, Experience, Education } from "@/types/cv";
+import { CVData, emptyCVData, Experience, Education, Reference } from "@/types/cv";
 import { TemplateId } from "@/types/templates";
 
 export function useCVBuilder() {
@@ -87,11 +87,38 @@ export function useCVBuilder() {
     }));
   };
 
+  const addReference = (reference: Omit<Reference, "id">) => {
+    const newReference: Reference = {
+      ...reference,
+      id: crypto.randomUUID(),
+    };
+    setCVData((prev) => ({
+      ...prev,
+      references: [...prev.references, newReference],
+    }));
+  };
+
+  const updateReference = (id: string, updates: Partial<Reference>) => {
+    setCVData((prev) => ({
+      ...prev,
+      references: prev.references.map((ref) =>
+        ref.id === id ? { ...ref, ...updates } : ref
+      ),
+    }));
+  };
+
+  const removeReference = (id: string) => {
+    setCVData((prev) => ({
+      ...prev,
+      references: prev.references.filter((ref) => ref.id !== id),
+    }));
+  };
+
   const setCVDataDirectly = (data: CVData) => {
     setCVData(data);
   };
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 4));
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 5));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
   const goToStep = (step: number) => setCurrentStep(step);
 
@@ -109,6 +136,9 @@ export function useCVBuilder() {
     removeEducation,
     addSkill,
     removeSkill,
+    addReference,
+    updateReference,
+    removeReference,
     setCVDataDirectly,
     nextStep,
     prevStep,

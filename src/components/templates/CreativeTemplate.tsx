@@ -6,7 +6,7 @@ interface TemplateProps {
 }
 
 export function CreativeTemplate({ data }: TemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="bg-white text-gray-900 shadow-large rounded-xl overflow-hidden" style={{ fontFamily: 'system-ui, sans-serif' }}>
@@ -136,6 +136,29 @@ export function CreativeTemplate({ data }: TemplateProps) {
                 >
                   {skill}
                 </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {references && references.length > 0 && (
+          <section>
+            <h2 className="text-lg font-black text-violet-600 mb-4 flex items-center gap-2">
+              <span className="w-8 h-1 bg-violet-600 rounded-full"></span>
+              References
+            </h2>
+            <div className="space-y-3">
+              {references.map((ref) => (
+                <div key={ref.id} className="relative pl-6">
+                  <div className="absolute left-0 top-2 w-3 h-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500" />
+                  <h3 className="font-bold text-gray-900">{ref.name}</h3>
+                  <p className="text-violet-600 font-medium">{ref.position}{ref.company ? `, ${ref.company}` : ""}</p>
+                  {ref.relationship && <p className="text-xs text-gray-500">{ref.relationship}</p>}
+                  <div className="flex gap-3 text-xs text-gray-500 mt-1">
+                    {ref.email && <span>{ref.email}</span>}
+                    {ref.phone && <span>{ref.phone}</span>}
+                  </div>
+                </div>
               ))}
             </div>
           </section>

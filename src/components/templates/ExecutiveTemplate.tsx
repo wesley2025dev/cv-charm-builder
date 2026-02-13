@@ -1,12 +1,12 @@
 import { CVData } from "@/types/cv";
-import { Mail, Phone, MapPin, Linkedin, Globe, Briefcase, GraduationCap, Star } from "lucide-react";
+import { Mail, Phone, MapPin, Linkedin, Globe, Briefcase, GraduationCap, Star, Users } from "lucide-react";
 
 interface TemplateProps {
   data: CVData;
 }
 
 export function ExecutiveTemplate({ data }: TemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="bg-white text-gray-900 shadow-large rounded-lg overflow-hidden" style={{ fontFamily: 'Georgia, serif' }}>
@@ -128,6 +128,28 @@ export function ExecutiveTemplate({ data }: TemplateProps) {
                 >
                   {skill}
                 </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {references && references.length > 0 && (
+          <section>
+            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-800 mb-4 uppercase tracking-wider">
+              <Users className="h-5 w-5 text-amber-500" />
+              References
+            </h2>
+            <div className="space-y-4">
+              {references.map((ref) => (
+                <div key={ref.id} className="border-l-2 border-gray-200 pl-4">
+                  <h3 className="font-bold text-gray-900">{ref.name}</h3>
+                  <p className="text-amber-600 font-medium">{ref.position}{ref.company ? `, ${ref.company}` : ""}</p>
+                  {ref.relationship && <p className="text-sm text-gray-500">{ref.relationship}</p>}
+                  <div className="flex gap-4 text-sm text-gray-500 mt-1">
+                    {ref.email && <span>{ref.email}</span>}
+                    {ref.phone && <span>{ref.phone}</span>}
+                  </div>
+                </div>
               ))}
             </div>
           </section>

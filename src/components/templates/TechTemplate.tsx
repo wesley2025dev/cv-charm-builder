@@ -5,7 +5,7 @@ interface TechTemplateProps {
 }
 
 export function TechTemplate({ data }: TechTemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="bg-slate-900 text-slate-100 min-h-full font-mono">
@@ -124,6 +124,27 @@ export function TechTemplate({ data }: TechTemplateProps) {
                   <p className="text-slate-500 text-xs mt-1">
                     {edu.startDate} - {edu.endDate}
                   </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {references && references.length > 0 && (
+          <div>
+            <p className="text-emerald-400 mb-3">
+              <span className="text-slate-500">$</span> cat references.json
+            </p>
+            <div className="space-y-3 pl-4">
+              {references.map((ref) => (
+                <div key={ref.id} className="bg-slate-800/50 rounded p-3 border border-slate-700/50">
+                  <p className="text-yellow-400 font-semibold">{ref.name}</p>
+                  <p className="text-slate-400 text-sm">{ref.position}{ref.company ? ` @ ${ref.company}` : ""}</p>
+                  {ref.relationship && <p className="text-slate-500 text-xs">{ref.relationship}</p>}
+                  <div className="flex gap-4 text-xs text-cyan-400 mt-1">
+                    {ref.email && <span>"{ref.email}"</span>}
+                    {ref.phone && <span>"{ref.phone}"</span>}
+                  </div>
                 </div>
               ))}
             </div>

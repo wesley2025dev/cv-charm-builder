@@ -3,13 +3,14 @@ import { PersonalInfoForm } from "@/components/forms/PersonalInfoForm";
 import { ExperienceForm } from "@/components/forms/ExperienceForm";
 import { EducationForm } from "@/components/forms/EducationForm";
 import { SkillsForm } from "@/components/forms/SkillsForm";
+import { ReferencesForm } from "@/components/forms/ReferencesForm";
 import { TemplateRenderer } from "@/components/TemplateRenderer";
 import { TemplateSelector } from "@/components/TemplateSelector";
 import { useCVBuilder } from "@/hooks/useCVBuilder";
 import { usePDFExport } from "@/hooks/usePDFExport";
 import { useSpellCheck } from "@/hooks/useSpellCheck";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Download, User, Briefcase, GraduationCap, Wrench, FileText, Palette, Wand2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Download, User, Briefcase, GraduationCap, Wrench, FileText, Palette, Wand2, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
@@ -17,7 +18,8 @@ const steps = [
   { id: 1, label: "Experience", icon: Briefcase },
   { id: 2, label: "Education", icon: GraduationCap },
   { id: 3, label: "Skills", icon: Wrench },
-  { id: 4, label: "Template", icon: Palette },
+  { id: 4, label: "References", icon: Users },
+  { id: 5, label: "Template", icon: Palette },
 ];
 
 export default function CVBuilder() {
@@ -35,6 +37,9 @@ export default function CVBuilder() {
     removeEducation,
     addSkill,
     removeSkill,
+    addReference,
+    updateReference,
+    removeReference,
     setCVDataDirectly,
     nextStep,
     prevStep,
@@ -91,6 +96,15 @@ export default function CVBuilder() {
           />
         );
       case 4:
+        return (
+          <ReferencesForm
+            references={cvData.references}
+            onAdd={addReference}
+            onUpdate={updateReference}
+            onRemove={removeReference}
+          />
+        );
+      case 5:
         return (
           <div>
             <h2 className="font-display text-xl font-semibold mb-2">Choose Your Template</h2>

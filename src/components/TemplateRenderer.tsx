@@ -16,7 +16,7 @@ interface TemplateRendererProps {
 
 export function TemplateRenderer({ data, templateId }: TemplateRendererProps) {
   const { personalInfo, experience, education, skills } = data;
-  const hasContent = personalInfo.fullName || experience.length > 0 || education.length > 0 || skills.length > 0;
+  const hasContent = personalInfo.fullName || experience.length > 0 || education.length > 0 || skills.length > 0 || (data.references && data.references.length > 0);
 
   if (!hasContent) {
     return (

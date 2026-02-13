@@ -6,7 +6,7 @@ interface TemplateProps {
 }
 
 export function ModernTemplate({ data }: TemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="bg-white text-gray-900 shadow-large rounded-lg overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -125,6 +125,27 @@ export function ModernTemplate({ data }: TemplateProps) {
                 >
                   {skill}
                 </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {references && references.length > 0 && (
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 border-b border-slate-200 pb-1">
+              References
+            </h2>
+            <div className="space-y-3">
+              {references.map((ref) => (
+                <div key={ref.id}>
+                  <h3 className="font-semibold text-gray-900">{ref.name}</h3>
+                  <p className="text-sm text-slate-600">{ref.position}{ref.company ? `, ${ref.company}` : ""}</p>
+                  {ref.relationship && <p className="text-xs text-slate-500">{ref.relationship}</p>}
+                  <div className="flex gap-4 text-xs text-slate-500 mt-1">
+                    {ref.email && <span>{ref.email}</span>}
+                    {ref.phone && <span>{ref.phone}</span>}
+                  </div>
+                </div>
               ))}
             </div>
           </section>

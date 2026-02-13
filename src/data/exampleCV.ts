@@ -77,4 +77,24 @@ export const exampleCVData: CVData = {
     "Team Leadership",
     "Market Analysis",
   ],
+  references: [
+    {
+      id: "ref-1",
+      name: "James Thompson",
+      position: "VP of Product",
+      company: "TechCorp Innovation",
+      email: "j.thompson@techcorp.com",
+      phone: "+1 (555) 987-6543",
+      relationship: "Direct Manager",
+    },
+    {
+      id: "ref-2",
+      name: "Dr. Lisa Chen",
+      position: "Professor of Computer Science",
+      company: "Stanford University",
+      email: "l.chen@stanford.edu",
+      phone: "+1 (555) 246-8135",
+      relationship: "Academic Advisor",
+    },
+  ],
 };
