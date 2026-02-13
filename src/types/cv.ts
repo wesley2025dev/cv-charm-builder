@@ -12,6 +12,7 @@ export interface CVData {
   experience: Experience[];
   education: Education[];
   skills: string[];
+  references: Reference[];
 }
 
 export interface Experience {
@@ -35,6 +36,16 @@ export interface Education {
   gpa?: string;
 }
 
+export interface Reference {
+  id: string;
+  name: string;
+  position: string;
+  company: string;
+  email: string;
+  phone: string;
+  relationship: string;
+}
+
 export const emptyCVData: CVData = {
   personalInfo: {
     fullName: "",
@@ -49,4 +60,5 @@ export const emptyCVData: CVData = {
   experience: [],
   education: [],
   skills: [],
+  references: [],
 };

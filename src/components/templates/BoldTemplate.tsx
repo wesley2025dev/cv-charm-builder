@@ -6,7 +6,7 @@ interface TemplateProps {
 }
 
 export function BoldTemplate({ data }: TemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="bg-white text-gray-900 shadow-large rounded-xl overflow-hidden" style={{ fontFamily: 'system-ui, sans-serif' }}>
@@ -127,6 +127,27 @@ export function BoldTemplate({ data }: TemplateProps) {
                 >
                   {skill}
                 </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {references && references.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-black text-blue-600 mb-4">
+              REFERENCES
+            </h2>
+            <div className="space-y-3">
+              {references.map((ref) => (
+                <div key={ref.id} className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-black text-gray-900">{ref.name}</h3>
+                  <p className="text-blue-600 font-bold">{ref.position}{ref.company ? `, ${ref.company}` : ""}</p>
+                  {ref.relationship && <p className="text-sm text-gray-500">{ref.relationship}</p>}
+                  <div className="flex gap-4 text-sm text-gray-500 mt-1">
+                    {ref.email && <span>{ref.email}</span>}
+                    {ref.phone && <span>{ref.phone}</span>}
+                  </div>
+                </div>
               ))}
             </div>
           </section>

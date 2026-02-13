@@ -5,7 +5,7 @@ interface FinanceTemplateProps {
 }
 
 export function FinanceTemplate({ data }: FinanceTemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="min-h-full bg-white">
@@ -111,6 +111,29 @@ export function FinanceTemplate({ data }: FinanceTemplateProps) {
                   <span className="text-sm text-slate-500">
                     {edu.startDate} – {edu.endDate}
                   </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {references && references.length > 0 && (
+          <div>
+            <h2 className="text-xs uppercase tracking-widest text-slate-500 mb-4 pb-2 border-b border-slate-200">
+              References
+            </h2>
+            <div className="space-y-4">
+              {references.map((ref) => (
+                <div key={ref.id} className="flex items-start justify-between">
+                  <div>
+                    <p className="font-semibold text-slate-900">{ref.name}</p>
+                    <p className="text-slate-600">{ref.position}{ref.company ? `, ${ref.company}` : ""}</p>
+                    {ref.relationship && <p className="text-sm text-slate-500">{ref.relationship}</p>}
+                  </div>
+                  <div className="text-right text-sm text-slate-500">
+                    {ref.email && <p>{ref.email}</p>}
+                    {ref.phone && <p>{ref.phone}</p>}
+                  </div>
                 </div>
               ))}
             </div>

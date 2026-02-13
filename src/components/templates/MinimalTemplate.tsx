@@ -5,7 +5,7 @@ interface TemplateProps {
 }
 
 export function MinimalTemplate({ data }: TemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="bg-white text-gray-900 shadow-large rounded-lg overflow-hidden p-10" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -86,6 +86,27 @@ export function MinimalTemplate({ data }: TemplateProps) {
               Skills
             </h2>
             <p className="text-gray-700">{skills.join("  ·  ")}</p>
+          </section>
+        )}
+
+        {references && references.length > 0 && (
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400 mb-6">
+              References
+            </h2>
+            <div className="space-y-4">
+              {references.map((ref) => (
+                <div key={ref.id}>
+                  <h3 className="font-medium text-gray-900">{ref.name}</h3>
+                  <p className="text-gray-500">{ref.position}{ref.company ? `, ${ref.company}` : ""}</p>
+                  {ref.relationship && <p className="text-sm text-gray-400">{ref.relationship}</p>}
+                  <div className="flex gap-4 text-sm text-gray-400 mt-1">
+                    {ref.email && <span>{ref.email}</span>}
+                    {ref.phone && <span>{ref.phone}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
         )}
       </div>

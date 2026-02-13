@@ -5,7 +5,7 @@ interface ArtisticTemplateProps {
 }
 
 export function ArtisticTemplate({ data }: ArtisticTemplateProps) {
-  const { personalInfo, experience, education, skills } = data;
+  const { personalInfo, experience, education, skills, references } = data;
 
   return (
     <div className="min-h-full bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
@@ -120,6 +120,29 @@ export function ArtisticTemplate({ data }: ArtisticTemplateProps) {
                   <p className="text-rose-400 text-xs mt-2">
                     {edu.startDate} — {edu.endDate}
                   </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {references && references.length > 0 && (
+          <div>
+            <h2 className="text-xs uppercase tracking-[0.3em] text-rose-400 mb-4">References</h2>
+            <div className="grid gap-4">
+              {references.map((ref, index) => (
+                <div
+                  key={ref.id}
+                  className="p-5 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-rose-100"
+                  style={{ transform: `rotate(${(index % 2 === 0 ? -0.5 : 0.5)}deg)` }}
+                >
+                  <p className="text-rose-900 font-medium">{ref.name}</p>
+                  <p className="text-orange-600 text-sm mt-1">{ref.position}{ref.company ? `, ${ref.company}` : ""}</p>
+                  {ref.relationship && <p className="text-rose-400 text-xs mt-1">{ref.relationship}</p>}
+                  <div className="flex gap-4 text-xs text-rose-400 mt-2">
+                    {ref.email && <span>{ref.email}</span>}
+                    {ref.phone && <span>{ref.phone}</span>}
+                  </div>
                 </div>
               ))}
             </div>
