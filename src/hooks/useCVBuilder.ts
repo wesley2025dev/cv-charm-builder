@@ -1,11 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CVData, emptyCVData, Experience, Education, Reference } from "@/types/cv";
 import { TemplateId } from "@/types/templates";
 
+const STORAGE_KEY = "cv-builder-data";
+const TEMPLATE_KEY = "cv-builder-template";
+const STEP_KEY = "cv-builder-step";
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function useCVBuilder() {
-  const [cvData, setCVData] = useState<CVData>(emptyCVData);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern");
+  const [cvData, setCVData] = useState<CVData>(() => loadFromStorage(STORAGE_KEY, emptyCVData));
+  const [currentStep, setCurrentStep] = useState(() => loadFromStorage(STEP_KEY, 0));
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>(() => loadFromStorage(TEMPLATE_KEY, "modern"));
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cvData));
+  }, [cvData]);
+
+  useEffect(() => {
+    localStorage.setItem(STEP_KEY, JSON.stringify(currentStep));
+  }, [currentStep]);
+
+  useEffect(() => {
+    localStorage.setItem(TEMPLATE_KEY, JSON.stringify(selectedTemplate));
+  }, [selectedTemplate]);
 
   const updatePersonalInfo = (field: keyof CVData["personalInfo"], value: string) => {
     setCVData((prev) => ({
